@@ -8,6 +8,15 @@ actions = {
     ']': "#TODO"
 }
 
+def generate_L_System_by_Level(dictionnaire,axiome,niveau):
+    for loop in range(niveau):
+        t=''
+        for i in axiome:
+            t += dictionnaire[i] if i in dictionnaire else i
+        axiome = t    
+    return(t)
+
+
 def LSystemToPythonCode(axiome, f):
     ''' convert an axiome's L-System string to an executable Python code to draw the L-System '''
 
@@ -29,9 +38,9 @@ for key,value in actions.items():
     if isinstance(value, list):
         array = []
         for i in value:
-            array.append(i.format(taille="150", angle="60"))
+            array.append(i.format(taille="25", angle="60"))
         actions.update({ key : array })
     else:
-        actions.update({ key : value.format(taille="150", angle="60") })       
+        actions.update({ key : value.format(taille="25", angle="60") })       
 
-LSystemToPythonCode("a++a+a++a", "test.py")
+LSystemToPythonCode(generate_L_System_by_Level(dictionnaire = {"a":"a-a++a-a"},axiome= "-a++a++a",niveau=3), "C:/Users/jakem/Documents/codage python/L-System/test.py")

@@ -1,8 +1,6 @@
-axiome = "a-a-a-a"
+axiome = "--a"
 regles = 
-"a=a+a*a+a+aa*aa+a+a*a+a"
-angle = 90
+"a=aa+[+a[+a]-a+a]-[-a-[a]+a]"
+angle = 30
 taille = 10
-niveau = 3
-
-
+niveau = 4

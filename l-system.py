@@ -4,10 +4,10 @@ actions = {
     '+': "right({angle})",
     '-': "left({angle})",
     '*': "right(180)",
-    '[': "#TODO",
-    ']': "#TODO"
+    '[': "savePos()",
+    ']': "getLastPos()"
 }
-def check(f):
+def getFileInputs(f):
 
     dico = {"axiome":None, "regles":{}, "angle":None, "taille":None, "niveau":None}
     filecorrect = True
@@ -36,9 +36,9 @@ def check(f):
                         filecorrect = False
                     dico[liste[0]]=liste[1]  
                 i+=1 
-    return dico,check2(dico) and filecorrect
+    return dico, checkInputs(dico) and filecorrect
 
-def check2(dico):
+def checkInputs(dico):
     filecorrect = True
 
     if dico["axiome"] == None or dico["axiome"] =="":
@@ -85,6 +85,9 @@ def LSystemToPythonCode(axiome, f):
     openedFile = open(f, 'w')
     openedFile.write("from turtle import *\n")
     openedFile.write("speed(0)\n")
+    openedFile.write("savedPos = []\n")
+    openedFile.write("def savePos():\n\tsavedPos.append((pos(), heading()))\n") 
+    openedFile.write("def getLastPos():\n\ttemp = savedPos.pop()\n\tgoto(temp[0])\n\tsetheading(temp[1])\n")
     for i in axiome:
         if isinstance(actions[i], list):
             for j in actions[i]:
@@ -96,9 +99,10 @@ def LSystemToPythonCode(axiome, f):
     openedFile.close()
 
 
-lsys,correct=check("input/Lsystem.txt")
-''' replace all placeholder in actions '''
+lsys, correct = getFileInputs( input("Input file >> ") or "input/Lsystem.txt" )
+
 if correct:
+    ''' replace all placeholder in actions '''
     for key,value in actions.items():
         if isinstance(value, list):
             array = []
@@ -108,4 +112,7 @@ if correct:
         else:
             actions.update({ key : value.format(taille=lsys["taille"],angle=lsys["angle"]) })       
 
-    LSystemToPythonCode(generate_L_System_by_Level(dictionnaire = lsys["regles"],axiome= lsys["axiome"],niveau=int(lsys["niveau"])), "C:/Users/super/Desktop/projet_algo/L-System/test.py")
+    LSystemToPythonCode(generate_L_System_by_Level(
+        dictionnaire = lsys["regles"], axiome = lsys["axiome"], niveau = int(lsys["niveau"]) ),
+        input("Output file >> ") or "output/draw.py"
+    )

@@ -1,0 +1,151 @@
+\documentclass{report}
+
+\title{Projet Python: L-System \\ Compte Rendu}
+\author{\textsc{Brisset} Joachim \and \textsc{Kemgne} Jules-Antoine \and \textsc{Hopsore} Theo}
+\date{\today}
+
+\usepackage{luatextra}
+\usepackage[a4paper, left=2cm, right=2cm, bottom=3cm, top=3cm]{geometry}
+\usepackage[french]{babel}
+
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{hyperref}
+\usepackage{smartdiagram} %create diagramm
+%\usepackage{graphicx}
+%\usepackage{array}
+%\usepackage{hhline}
+\usepackage{float} % use to force rendre of figure Here (H)
+
+\renewcommand{\thesection}{\uppercase{\roman{section}}} % change theme of \section
+
+\pagestyle{fancy}	
+\fancyhf{}	
+
+\fancyhead[l]{\textit{\rightmark}}
+\fancyhead[C]{Projet Python : L-System} 
+\fancyhead[r]{\textit{\today}}
+\renewcommand{\headrulewidth}{0.2pt}
+
+\fancyfoot[L]{}
+\fancyfoot[C]{Page \thepage ~sur \pageref{LastPage}}
+\fancyfoot[R]{\includegraphics[scale=0.25]{images/CyTech_Logo.jpg}}
+
+\begin{document}
+	\maketitle
+	\clearpage
+	
+	\tableofcontents{\thispagestyle{fancy}}
+	\clearpage
+	
+	\section{Présentation}
+		\paragraph{}
+			Ce projet est l'évaluation finale du module python. Ce projet aura pour but de réalisé un programme capable, de a partir d'un fichier d'entrée normé représentant un L-System, générer un code permettant de le dessiner.
+	\section{Caractéristique de Projet}
+		\paragraph{Langage de programmation}
+			Le programme finale devra être rédiger en langage Python étant donné que ce projet est l'évaluation finale de ce module.
+		\paragraph{Entrée}
+			le fichier d'entrée devra être sous la forme suivante: \\
+
+			\fbox{\parbox{\linewidth\fboxrule\fboxsep}{
+			\begin{tabular}{lll}
+				axiome= &<chaine de caractère> \\
+				regles= &<symbole> = <chaine de caractère> \\
+						& \hspace{19mm} \vdots \\
+						&<symbole> = <chaine de caractère> \\
+				taille=	&<nombre> \\
+				angle=	&<nombre> \\
+				niveau=	&<nombre>
+			\end{tabular}
+			}}
+	
+			\subparagraph{} L'ordre de règles du fichier n'est pas considéré important. Cependant la présence et l'unicité des règles excepté "regles" est primordial. Il en vas de même si dans la règle "regles", un même symbole apparait plusieurs fois.
+		
+		\paragraph{Sortie} Le fichier de sortie doit être en langage Python pour pouvoir être exécuter immédiatement après.
+	
+	\section{Organisation}
+		\paragraph{Git}
+			Pour avoir un travail collaboratif efficace utilisons git, un logiciel qui permet de facilité le travail collaboratif sur les projets de programmation. Il permet a chacun de modifier le code sans trop se soucier des problèmes de modification simultanée, de garder une trace de toute nos modification du code et ainsi de revenir à un code antérieur si nécessaire, de travailler à part sur de nouvelle fonctionnalité en toute simplicité et revenir travailler sur le projet principal sans soucie.
+			\subparagraph{}	
+Le projet sera hébergé sur GitHub en version public.
+			\subparagraph{}
+Afin de facilité la vie a certain qui n'ont pas le courage d'apprendre le bash de git, nous utilisons gitKraken, une application permettant une utilisation intuitive de git a l'aide d'une interface graphique.
+			\begin{figure}[h]
+				\begin{center}			
+					\includegraphics[scale=0.60]{images/insert_image_here.jpg}
+					\caption{screenshot de l'application GitKraken}
+				\end{center}
+			\end{figure}
+
+		\paragraph{Processus de développement}
+			Pour s'assurer que le programme fonctionnera convenablement nous nous sommes concentré tout d'abord sur le fonctionnement du programme sous sa forme la plus basique. C'est-à-dire que nous ne nous attardions pas sur les vérifications, interactivité du programme et tout autre ajout. A ce stade le programme ne peut que lire un fichier spécifique considéré valide et créer le code dans un autre fichier donné. Puis nous étendrons le programme en ajouter les vérification, l'interactivité et toutes autre fonctionnalités.
+ 
+ 		\paragraph{Planning de travail}
+ 			Pour être efficace dans le réalisation du projet nous avons commencé par réfléchir ensemble à la conception du programme pour ne pas trop revenir sur nos morceau de code précédent. Puis chaque semaine nous faisions un point sur l'avancement du projet aidions certain à finir le travail de la semaine précédente et enfin établissions le travail de chaque membre pour la semaine 
+ 	
+ 	\section{Conception}
+ 		\paragraph{Programme basique} Voici ci-dessous le processus du programme basique :
+ 		\begin{center}
+			\smartdiagramset{
+			uniform sequence color=true,
+			sequence item text width=3cm,
+			sequence item border color=white,
+			sequence item font size=\footnotesize,
+			sequence item text color=white
+}
+			\smartdiagram[sequence diagram]{
+			Charger le L-System à partir du fichier,
+			Croître le L-System au niveau voulu,
+			Transcription en programme Python}
+		\end{center}
+		
+		\subparagraph{}
+			Chacune de ces étapes fera office d'un fonction a part entière
+			
+		\paragraph{Modèle du L-System}
+			Le l-System est représenter par un dictionnaire avec les index suivant : axiome, regles, taille, angle, niveau. Généralement en programmation nous ecrivons en anglais, cependant pour facilité le programme et la compréhension nous préférerons utiliser les mots français qui seront les même que dans le fichier d’entrée. 
+			
+			\begin{figure}[h]
+				\begin{center}			
+					\includegraphics[scale=0.70]{images/modele_lsystem.PNG}
+					\caption{modélisation en code Python du L-System}
+				\end{center}
+			\end{figure}
+			
+		\paragraph{Structure}
+			Le projet n’étant pas très complexe nous avons décidé de rassembler l’intégralité programme dans un seul fichier, nommé \emph{l-system.py}, et de le décomposé en plusieurs fonction effectuant chacune une tâche particulière.
+	\section{Développement}
+		\subsection{Programme basique}
+			\paragraph{} Dans sa version basique, le programme n'est pas très compliqué, on n'y distingue que trois fonctionnalités importantes:
+			\subparagraph{}
+				En premier lieu, le chargement du L-System par la lecture d'un fichier:
+			
+			\subparagraph{}
+				Puis ensuite la croissance du L-System jusqu'au niveau souhaité:
+				
+			\subparagraph{}
+				Et enfin la transcription du L-System en un code python capable de le dessiner. Cette fonctionnalité se fait au travers de l'appel de la function \emph{LSystemToPythonCode()} qui prend en paramètre l'axiome a dessiner (on aurait pu prendre le L-System en entier) et le nom du fichier de sortie. \\
+				
+				Les instructions associées a leur symbole sont stocké dans un dictionnaire:
+				
+			\begin{figure}[h]
+				\begin{center}			
+					\includegraphics[scale=0.70]{images/action_switcher.PNG}
+					\caption{pas de titre}
+				\end{center}
+			\end{figure}	
+			
+			La notation \emph{\{taille\}} et \emph{\{angle\}} sont appelé placeholder, ce sont des variable qui seront remplacer par autre chose plus tard et notamment par leur valeur dans ce programme. \\
+			
+			Par la suite la fonction na plus qu'a écrire les ligne obligatoire tel que \emph{from turtle import *} et pour chaque symbol qu'elle rencontre dans l'axiome elle cherche les instruction associé et les écrit dans le fichier et finit son exécution
+				
+		\subsection{Vérification et Interactivité}
+		
+		\subsection{Argument de commande}
+	\section{Acquis}
+		\paragraph{with syntax} ???
+		\paragraph{dict switcher}
+			Durant le projet nous avons voulu utilisé un block switch pour pourvoir déterminer quelle instruction sont associé a un symbole néanmoins cette syntax n’existe pas en python ( bien qu’on aurait put utilise ‘if – elif’ ). Ce problème nous a amener a entrevoir une nouvelle utilisation des dictionnaire comme switcher grâce a « switcher[‘case’] ». De plus utilisé un dictionnaire de cette manière permet d’avoir un switch dynamique ( qui n’est pas fixe dans le programme) et ainsi de pouvoir le modifier pendant l’execution.
+		\paragraph{type of input}
+			On a appris a bien gérer le type d’entrée voulus a l’aide de la fonction input et du block try : except ValueError :
+\end{document}

@@ -160,7 +160,7 @@ def LSystemToPythonCode(axiome, action, f):
             print("[Error] >> le symbole " + i + " n'a pas d'action associée a lui")
             openedFile.close()
             os.remove(f)
-            return False
+            return True, None
 
         if isinstance(actions[i], list):            # handle multiples functions for 1 symbols 
             for j in actions[i]:
@@ -170,7 +170,7 @@ def LSystemToPythonCode(axiome, action, f):
 
     openedFile.write("done()\n")                    # to pause the program 
     openedFile.close()
-    return True
+    return False, f
 
 if __name__ == "__main__":      # call main() if this file is the primary file
     actions = {                             # switcher by symbols
@@ -195,7 +195,7 @@ if __name__ == "__main__":      # call main() if this file is the primary file
 
         formatActions(lsystem, actions)
 
-        error = LSystemToPythonCode(
+        error, outputFile = LSystemToPythonCode(
             generate_L_System_by_Level(rules = lsystem["regles"], axiome = lsystem["axiome"], level = lsystem["niveau"]),
             actions,
             inputFile(message="Please enter path to the output file : ", defaultFile=outFile)
@@ -244,8 +244,12 @@ if __name__ == "__main__":      # call main() if this file is the primary file
 
         handleOptions()
 
-        if not app(input_file, output_file):
-            print("Errors has occured. The program could not finish properly.")
-            return -1
+        try:
+            if app(input_file, output_file, draw):
+                print("Errors has occured. The program could not finish properly.")
+                sys.exit(-1)
+
+        except KeyboardInterrupt:
+            print("program interrupted ... ")
 
     main()

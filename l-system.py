@@ -25,16 +25,9 @@ def inputFile(message="file's path : ", defaultFile = None, shouldExist = None):
         if response in ("no","N"): return inputFile(message=message, shouldExist=shouldExist)
 
     return filename
-def choice(value, choice):
-    for i,j in enumerate(choice):
-        print(str(i) + " : " + j)
-    response = input("Choose one >> ")
-    while not response in [str(i) for i in range(len(choice))]:
-        response = input("Choose one >> ")
-    return value[int(response)]
 def loadInput(filename, lsystem):
     ''' load from a file all L-System's parameters '''
-
+    '''
     error = False   # True ther is a problem with L-System parameters
     currentDict = ''
     i = 0
@@ -43,68 +36,70 @@ def loadInput(filename, lsystem):
         lines = fichier.readlines()
         while i < len(lines):
             elements = list(map(lambda item: item.strip(" \"\n"), lines[i].split("=")))
+            i += 1
 
-            if elements[0] == '': 
-                i += 1
-                continue
+            if elements[0] == '': continue
             if elements[0] in lsystem:
                 if isinstance(lsystem[elements[0]], dict):
                     currentDict = elements[0]
                     if elements[1] != "": lsystem[currentDict][elements[1]] = elements[2]  # handle increasing rule on same line as 'regles'
-
-                    i += 1    
-                    while lines[i].strip().startswith("\"") :   # new loop handling rules with multiple line
+                    
+                    while i < len(lines) and lines[i].strip().startswith("\"") :   # new loop handling rules with multiple line
                         
                         elements = list(map(lambda item: item.strip(" \"\n"), lines[i].split("=")))
                         if elements[0] in lsystem[currentDict]:
-                            print("rules : " + elements[0] + " already exist in " + currentDict + ". Choose the correct one : ")
-                            lsystem[currentDict][elements[0]] = choice(
-                                [ lsystem[currentDict][elements[0]], elements[1] ],
-                                [ elements[0] + " => " + lsystem[currentDict][elements[0]], elements[0] + " => " + elements[1] ]
-                            )
-                        lsystem[currentDict][elements[0]] = elements[1]
+                            print ("erreur , plusieurs occurences de la règle de complacement", elements[0], "dans", currentDict)
+                            error = True
+                        else:
+                            lsystem[currentDict][elements[0]] = elements[1]
                         i += 1
-
                 else:
                     if lsystem[ elements[0]] != None:
                         print ("erreur , plusieurs occurences de la règle", elements[0])
                         error = True
                     lsystem[elements[0]] = elements[1] 
-                    i += 1 
             else:
                 print("Unknow rules : " + elements[0])
                 print("Error not severe, continue program ...")  
-                i += 1
-            '''
-            if elements[0]=="regles":   # handle 'regles' rules 
-                if elements[1] != "": lsystem["regles"][elements[1]] = elements[2]  # handle increasing rule on same line as 'regles'
+    '''
+    error = False
+    currentDict = ''
+    with open(filename, "r") as fichier:
+        for i in fichier.readlines():
+            indent = i.startswith(" ") or i.startswith("\"")
+            elements = list(map(lambda item: item.strip(" \"\n"), i.split("=")))
 
-                i += 1    
-                while lines[i].strip().startswith("\"") :   # new loop handling increasing rules 
-                    
-                    elements = list(map(lambda item: item.strip(" \"\n"), lines[i].split("=")))
-                    lsystem["regles"][elements[0]] = elements[1]
-                    i += 1
-            else: 
-                if elements[0] in lsystem:  
+            if elements[0] == '': continue
+            if not indent and currentDict : currentDict = ''
+            if currentDict:
+                if elements[0] in lsystem[currentDict]:
+                    print ("erreur , plusieurs occurences de la règle de complacement", elements[0], "dans", currentDict)
+                    error = True
+                else:
+                    lsystem[currentDict][elements[0]] = elements[1]
+            else:
+                if elements[0] in lsystem:
+                    if isinstance(lsystem[elements[0]], dict):
+                        currentDict = elements[0]
+                        if elements[1] != "": lsystem[currentDict][elements[1]] = elements[2]
+                        continue
                     if lsystem[ elements[0]] != None:
                         print ("erreur , plusieurs occurences de la règle", elements[0])
                         error = True
-                    lsystem[elements[0]] = elements[1]  
-                i+=1 
-            '''
-
+                    lsystem[elements[0]] = elements[1]
+                else:
+                    print("Unknow rules : " + elements[0])
+                    print("Error not severe, continue program ...") 
     return checkLSystem(lsystem) or error
 def checkLSystem(lsystem):
     ''' Check the validity of all L-System's parameters '''
-
     error = False
     if lsystem["axiome"] == None or lsystem["axiome"] == "":
         print("[Error] >> la règle 'axiome' est vide")
         error = True
 
     try:
-        if lsystem["taille"] == None or int(lsystem["taille"]) < 0:
+        if lsystem["taille"] == None or float(lsystem["taille"]) < 0:
             print("[Error] >> la règle 'taille' est vide ou a une valeur invalide (<0)")
             error = True
     except ValueError:
@@ -112,7 +107,7 @@ def checkLSystem(lsystem):
         error = True
 
     try:
-        if lsystem["angle"] == None or int(lsystem["angle"]) < 0 or int(lsystem["angle"]) > 360 :
+        if lsystem["angle"] == None or float(lsystem["angle"]) < 0 or float(lsystem["angle"]) > 360 :
             print("[Error] >> la règle 'angle' est vide ou a une valeur invalide (<0 or >360)")
             error = True
     except ValueError:
@@ -126,10 +121,10 @@ def checkLSystem(lsystem):
     except ValueError:
         print("[Error] >> la règle 'niveau' n'est pas un nombre !")
         error = True
-
     return error
 def formatActions(lsystem, actions):
-    ''' replace all placeholder in actions '''
+    ''' add custom rules and replace all placeholder in actions '''
+    actions.update( lsystem["customrules"] )
 
     for key,value in actions.items():
         if isinstance(value, list):

@@ -148,12 +148,19 @@ def generate_L_System_by_Level(rules, axiome, level):
             temp += rules[i] if i in rules else i
         axiome = temp    
     return temp
-def LSystemToPythonCode(axiome, action, f):
-    ''' convert an axiome's L-System string to an executable Python code to draw the L-System '''
+def LSystemToPythonCode(axiome, action, f, verbose=False):
+    ''' convert an axiome's L-System string to an executable Python code drawing the L-System '''
+    def write(openf, msg):
+        if verbose: print(msg)
+        openf.write(msg)
 
     openedFile = open(f, 'w')
-    openedFile.write("from turtle import *\n")      # needed for drawing
-    openedFile.write("speed(0)\n")                  # increase at maximum the drawing speed
+    write(openedFile, "from turtle import *\n")      # needed for drawing
+    write(openedFile, "speed(0)\n")                  # increase at maximum the drawing speed
+
+    write(openedFile, "savedPos = [] \n")
+    write(openedFile, "def savePos():\n\tsavedPos.append( (pos(), heading()) )\n")
+    write(openedFile, "def getLastPos():\n\ttemp = savedPos.pop()\n\tgoto(temp[0])\n\tsetheading(temp[1])\n")
 
     for i in axiome:                                # for each symbol in axiome write the associated function(s)
         if not i in actions:
@@ -164,11 +171,11 @@ def LSystemToPythonCode(axiome, action, f):
 
         if isinstance(actions[i], list):            # handle multiples functions for 1 symbols 
             for j in actions[i]:
-                openedFile.write(j + "\n")
+                write(openedFile, j + "\n")
         else:
-            openedFile.write(actions[i] + "\n")
+            write(openedFile, actions[i] + "\n")
 
-    openedFile.write("done()\n")                    # to pause the program 
+    write(openedFile, "done()\n")                    # to pause the program 
     openedFile.close()
     return False, f
 
@@ -179,8 +186,8 @@ if __name__ == "__main__":      # call main() if this file is the primary file
         '+': "right({angle})",
         '-': "left({angle})",
         '*': "right(180)",
-        '[': "#TODO",
-        ']': "#TODO"
+        '[': "savePos()",
+        ']': "getLastPos()"
     }
 
     def app(inFile = '', outFile = '', shouldDraw=True):
@@ -198,7 +205,8 @@ if __name__ == "__main__":      # call main() if this file is the primary file
         error, outputFile = LSystemToPythonCode(
             generate_L_System_by_Level(rules = lsystem["regles"], axiome = lsystem["axiome"], level = lsystem["niveau"]),
             actions,
-            inputFile(message="Please enter path to the output file : ", defaultFile=outFile)
+            inputFile(message="Please enter path to the output file : ", defaultFile=outFile),
+            True
         )
         if error: return error
         if shouldDraw: os.execv(sys.executable, [sys.executable, '"' + outputFile + '"'])

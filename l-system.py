@@ -172,26 +172,6 @@ def LSystemToPythonCode(axiome, action, f):
     openedFile.close()
     return True
 
-
-    ''' function call at program start to handle CMD argument '''
-
-    input_file, output_file = '', ''
-
-    try:
-        options, args = getopt.getopt( sys.argv[1:], "i:o:")
-    except getopt.GetoptError as error:
-        print("Wrong syntax !")
-        print(error.msg)
-        sys.exit()
-
-    for param, arg in options:
-        if param in ("-i"): input_file = arg
-        elif param in ("-o"): output_file = arg
-
-    if app(input_file, output_file):
-        print("Errors has occured. The program could not finish properly.")
-        return -1
-    
 if __name__ == "__main__":      # call main() if this file is the primary file
     actions = {                             # switcher by symbols
         'a': ["pd()", "fd({taille})"],
@@ -203,7 +183,7 @@ if __name__ == "__main__":      # call main() if this file is the primary file
         ']': "#TODO"
     }
 
-    def app(inFile = '', outFile = ''):
+    def app(inFile = '', outFile = '', shouldDraw=True):
         ''' main function of the application '''
         lsystem = {"axiome":None, "regles":{}, "angle":None, "taille":None, "niveau":None, "customrules":{}}  # default L-System
 
@@ -220,23 +200,49 @@ if __name__ == "__main__":      # call main() if this file is the primary file
             actions,
             inputFile(message="Please enter path to the output file : ", defaultFile=outFile)
         )
-        return error
-        
+        if error: return error
+        if shouldDraw: os.execv(sys.executable, [sys.executable, '"' + outputFile + '"'])
+
+    def showHelp():
+        print("l-system.py est un programme pour generer des programme dessinant le L-System")
+        print("SYNTAX : python l-system.py [options] ")
+        print("")
+        print("OPTIONS :")
+        print("\t x -i <fichier> ou --inFile=<fichier>  : permet de definir le fichier d'entree")
+        print("\t x -o <fichier> ou --outFile=<fichier> : permet de definit le fichier de sortie")
+        print("\t x --nodraw : permet de ne pas dessiner a la fin du programme")
+
+        sys.exit()
     def main():
-        ''' function call at program start to handle CMD argument '''
+        ''' function call at program start. It handle CMD argument '''
+        def handleOptions():
+            ''' function that handle command parameter '''
+            try:
+                options, args = getopt.getopt( sys.argv[1:], "i:o:?h", ['inFile=', 'outFile=', 'nodraw', 'help'])
+            except getopt.GetoptError as error:
+                print("Wrong syntax ! " + error.msg)
+                showHelp()
+
+            for param, arg in options:
+                if param in ("-?", "-h", "--help"): showHelp()
+                elif param in ("-i, --inFile"):
+                    if input_file:
+                        print("-i et --inFile ne doivent pas être utilisé ensemble ou apparaître plusieurs fois")
+                        sys.exit(-1)
+                    else:
+                        input_file = arg
+                elif param in ("-o, --outFile"):
+                    if output_file:
+                        print("-o et --outFile ne doivent pas être utilisé ensemble ou apparaître plusieurs fois")
+                        sys.exit(-1)
+                    else:
+                        output_file = arg
+                elif param in ("--nodraw"): draw = False
 
         input_file, output_file = '', ''
+        draw = True
 
-        try:
-            options, args = getopt.getopt( sys.argv[1:], "i:o:")
-        except getopt.GetoptError as error:
-            print("Wrong syntax !")
-            print(error.msg)
-            sys.exit()
-
-        for param, arg in options:
-            if param in ("-i"): input_file = arg
-            elif param in ("-o"): output_file = arg
+        handleOptions()
 
         if not app(input_file, output_file):
             print("Errors has occured. The program could not finish properly.")

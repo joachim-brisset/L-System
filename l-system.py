@@ -27,41 +27,6 @@ def inputFile(message="file's path : ", defaultFile = None, shouldExist = None):
     return filename
 def loadInput(filename, lsystem):
     ''' load from a file all L-System's parameters '''
-    '''
-    error = False   # True ther is a problem with L-System parameters
-    currentDict = ''
-    i = 0
-
-    with open(filename, "r") as fichier:    #similaire to try/finally
-        lines = fichier.readlines()
-        while i < len(lines):
-            elements = list(map(lambda item: item.strip(" \"\n"), lines[i].split("=")))
-            i += 1
-
-            if elements[0] == '': continue
-            if elements[0] in lsystem:
-                if isinstance(lsystem[elements[0]], dict):
-                    currentDict = elements[0]
-                    if elements[1] != "": lsystem[currentDict][elements[1]] = elements[2]  # handle increasing rule on same line as 'regles'
-                    
-                    while i < len(lines) and lines[i].strip().startswith("\"") :   # new loop handling rules with multiple line
-                        
-                        elements = list(map(lambda item: item.strip(" \"\n"), lines[i].split("=")))
-                        if elements[0] in lsystem[currentDict]:
-                            print ("erreur , plusieurs occurences de la règle de complacement", elements[0], "dans", currentDict)
-                            error = True
-                        else:
-                            lsystem[currentDict][elements[0]] = elements[1]
-                        i += 1
-                else:
-                    if lsystem[ elements[0]] != None:
-                        print ("erreur , plusieurs occurences de la règle", elements[0])
-                        error = True
-                    lsystem[elements[0]] = elements[1] 
-            else:
-                print("Unknow rules : " + elements[0])
-                print("Error not severe, continue program ...")  
-    '''
     error = False
     currentDict = ''
     with open(filename, "r") as fichier:
@@ -83,7 +48,7 @@ def loadInput(filename, lsystem):
                         currentDict = elements[0]
                         if elements[1] != "": lsystem[currentDict][elements[1]] = elements[2]
                         continue
-                    if lsystem[ elements[0]] != None:
+                    if lsystem[elements[0]] != None:
                         print ("erreur , plusieurs occurences de la règle", elements[0])
                         error = True
                     lsystem[elements[0]] = elements[1]

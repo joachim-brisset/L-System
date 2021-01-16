@@ -1,118 +1,223 @@
-actions = {
-    'a': ["pd()", "fd({taille})"],
-    'b': ["pu()", "fd({taille})"],
-    '+': "right({angle})",
-    '-': "left({angle})",
-    '*': "right(180)",
-    '[': "savePos()",
-    ']': "getLastPos()"
-}
-def getFileInputs(f):
+import sys
+import getopt
+import os
 
-    dico = {"axiome":None, "regles":{}, "angle":None, "taille":None, "niveau":None}
-    filecorrect = True
-    i = 0
-    with open(f , "r") as fichier:
-        lines = fichier.readlines()
-        while i < len(lines):
-            
-            liste = lines[i].split("=")
-            liste = list(map(lambda item: item.strip(" \"\n"),liste))
+def inputFile(message="file's path : ", defaultFile = None, shouldExist = None):
+    ''' handle user's file input validity '''
 
-            if liste[0]=="regles":
-                if liste[1] != "": dico["regles"][liste[1]]=liste[2]
+    filename = os.path.abspath(defaultFile or input(message))  # ask user for file path if no default file path proveided
 
-                i +=1    
-                while lines[i].startswith("\"") :
-                    
-                    liste = lines[i].split("=")
-                    liste = list(map(lambda item: item.strip(" \"\n"),liste))
-                    dico["regles"][liste[0]]=liste[1]
-                    i +=1
-            else: 
-                if liste[0] in dico:  
-                    if dico[liste[0]] != None:
-                        print ("erreur , plusieurs occurences de la règle", liste[0])
-                        filecorrect = False
-                    dico[liste[0]]=liste[1]  
-                i+=1 
-    return dico, checkInputs(dico) and filecorrect
+    if shouldExist and not os.path.isfile(filename):                        # if file should exist check it
+        print("Sorry but the path you provide for the file does not exist")
+        return inputFile(message=message, shouldExist=True)
+    
+    if filename.find("<>:*?|") != -1:                                       # check naming normes
+        print("Sorry but you provided a non valid filename ('<>:*?|')")
+        return inputFile(message=message, shouldExist=shouldExist)
 
-def checkInputs(dico):
-    filecorrect = True
-
-    if dico["axiome"] == None or dico["axiome"] =="":
-        print("la règle 'axiome' est vide")
-        filecorrect = False
-    try:
-        if  dico["taille"]== None or  int(dico["taille"])<0 :
-            print("la règle 'taille' est vide ou a une valeur fausse (<0) ou a un caratere faux")
-            filecorrect = False
-    except ValueError:
-        print("la règle 'taille' est vide ou a une valeur inférieur à 0 ou a un caratere faux")
-        filecorrect = False
-
-    try:
-        if  dico["angle"]== None or not(int(dico["angle"])>=0 and int(dico["angle"])<360) :
-            print("la règle 'angle' est vide ou a une valeur fausse (0-360) ou a un caratere faux")
-            filecorrect = False
-    except ValueError:
-        print("la règle 'angle' est vide ou a une valeur inférieur à 0 ou a un caratere faux")
-        filecorrect = False
-    try:
-        if int(dico["niveau"])<0 or dico["niveau"]== None :
-            print("la règle 'niveau' est vide ou a une valeur inférieur à 0 ou a un caratere faux")
-            filecorrect = False
-    except ValueError:
+    if shouldExist == None and os.path.isfile(filename):                    # handle if file alredy exist
+        print("The file you provided already exist should we continue ? (yes/no)")
+        response = input()
+        while not response in ("yes","no","Y","N"):
+            print("The file you provided already exist should we continue ?")
+            response = input()
         
-        print("la règle 'niveau' est vide ou a une valeur inférieur à 0 ou à un caratere faux")
-        filecorrect = False
+        if response in ("no","N"): return inputFile(message=message, shouldExist=shouldExist)
 
-    return filecorrect  
+    return filename
+def loadInput(filename, lsystem):
+    ''' load from a file all L-System's parameters '''
+    error = False
+    currentDict = ''
+    with open(filename, "r") as fichier:
+        for i in fichier.readlines():
+            indent = i.startswith(" ") or i.startswith("\"")
+            elements = list(map(lambda item: item.strip(" \"\n"), i.split("=")))
 
-def generate_L_System_by_Level(dictionnaire,axiome,niveau):
-    for loop in range(niveau):
-        t=''
-        for i in axiome:
-            t += dictionnaire[i] if i in dictionnaire else i
-        axiome = t    
-    return(t)
+            if elements[0] == '': continue
+            if not indent and currentDict : currentDict = ''
+            if currentDict:
+                if elements[0] in lsystem[currentDict]:
+                    print ("erreur , plusieurs occurences de la règle de complacement", elements[0], "dans", currentDict)
+                    error = True
+                else:
+                    lsystem[currentDict][elements[0]] = elements[1]
+            else:
+                if elements[0] in lsystem:
+                    if isinstance(lsystem[elements[0]], dict):
+                        currentDict = elements[0]
+                        if elements[1] != "": lsystem[currentDict][elements[1]] = elements[2]
+                        continue
+                    if lsystem[elements[0]] != None:
+                        print ("erreur , plusieurs occurences de la règle", elements[0])
+                        error = True
+                    lsystem[elements[0]] = elements[1]
+                else:
+                    print("Unknow rules : " + elements[0])
+                    print("Error not severe, continue program ...") 
+    return checkLSystem(lsystem) or error
+def checkLSystem(lsystem):
+    ''' Check the validity of all L-System's parameters '''
+    error = False
+    if lsystem["axiome"] == None or lsystem["axiome"] == "":
+        print("[Error] >> la règle 'axiome' est vide")
+        error = True
 
+    try:
+        if lsystem["taille"] == None or float(lsystem["taille"]) < 0:
+            print("[Error] >> la règle 'taille' est vide ou a une valeur invalide (<0)")
+            error = True
+    except ValueError:
+        print("[Error] >> la règle 'taille' n'est pas un nombre !")
+        error = True
 
-def LSystemToPythonCode(axiome, f):
-    ''' convert an axiome's L-System string to an executable Python code to draw the L-System '''
+    try:
+        if lsystem["angle"] == None or float(lsystem["angle"]) < 0 or float(lsystem["angle"]) > 360 :
+            print("[Error] >> la règle 'angle' est vide ou a une valeur invalide (<0 or >360)")
+            error = True
+    except ValueError:
+        print("[Error] >> la règle 'angle' n'est pas un nombre !")
+        error = True
 
-    openedFile = open(f, 'w')
-    openedFile.write("from turtle import *\n")
-    openedFile.write("speed(0)\n")
-    openedFile.write("savedPos = []\n")
-    openedFile.write("def savePos():\n\tsavedPos.append((pos(), heading()))\n") 
-    openedFile.write("def getLastPos():\n\ttemp = savedPos.pop()\n\tgoto(temp[0])\n\tsetheading(temp[1])\n")
-    for i in axiome:
-        if isinstance(actions[i], list):
-            for j in actions[i]:
-                openedFile.write(j + "\n")
-        else:
-            openedFile.write(actions[i] + "\n")
+    try:
+        if int(lsystem["niveau"]) < 0 or lsystem["niveau"] == None :
+            print("[Error] >> la règle 'niveau' est vide ou a une valeur invalide (<0)")
+            error = True
+    except ValueError:
+        print("[Error] >> la règle 'niveau' n'est pas un nombre !")
+        error = True
+    return error
+def formatActions(lsystem, actions):
+    ''' add custom rules and replace all placeholder in actions '''
+    actions.update( lsystem["customrules"] )
 
-    openedFile.write("done()\n")
-    openedFile.close()
-
-
-lsys, correct = getFileInputs( input("Input file >> ") or "input/Lsystem.txt" )
-
-if correct:
-    ''' replace all placeholder in actions '''
     for key,value in actions.items():
         if isinstance(value, list):
             array = []
             for i in value:
-                array.append(i.format(taille=lsys["taille"],angle=lsys["angle"]))
+                array.append(i.format(taille=lsystem["taille"],angle=lsystem["angle"]))
             actions.update({ key : array })
         else:
-            actions.update({ key : value.format(taille=lsys["taille"],angle=lsys["angle"]) })       
+            actions.update({ key : value.format(taille=lsystem["taille"],angle=lsystem["angle"]) })
+def generate_L_System_by_Level(rules, axiome, level):
+    ''' generate the L-System for the desired level '''
 
-    LSystemToPythonCode(generate_L_System_by_Level(
-        dictionnaire = lsys["regles"], axiome = lsys["axiome"], niveau = int(lsys["niveau"]) ),
-        input("Output file >> ") or "output/draw.py"
-    )
+    for loop in range( int(level) ):
+        temp = ''
+        for i in axiome:
+            temp += rules[i] if i in rules else i
+        axiome = temp    
+    return temp
+def LSystemToPythonCode(axiome, action, f, verbose=False):
+    ''' convert an axiome's L-System string to an executable Python code drawing the L-System '''
+    def write(openf, msg):
+        if verbose: print(msg)
+        openf.write(msg)
+
+    openedFile = open(f, 'w')
+    write(openedFile, "from turtle import *\n")      # needed for drawing
+    write(openedFile, "speed(0)\n")                  # increase at maximum the drawing speed
+
+    write(openedFile, "savedPos = [] \n")
+    write(openedFile, "def savePos():\n\tsavedPos.append( (pos(), heading()) )\n")
+    write(openedFile, "def getLastPos():\n\ttemp = savedPos.pop()\n\tgoto(temp[0])\n\tsetheading(temp[1])\n")
+
+    for i in axiome:                                # for each symbol in axiome write the associated function(s)
+        if not i in actions:
+            print("[Error] >> le symbole " + i + " n'a pas d'action associée a lui")
+            openedFile.close()
+            os.remove(f)
+            return True, None
+
+        if isinstance(actions[i], list):            # handle multiples functions for 1 symbols 
+            for j in actions[i]:
+                write(openedFile, j + "\n")
+        else:
+            write(openedFile, actions[i] + "\n")
+
+    write(openedFile, "done()\n")                    # to pause the program 
+    openedFile.close()
+    return False, f
+
+if __name__ == "__main__":      # call main() if this file is the primary file
+    actions = {                             # switcher by symbols
+        'a': ["pd()", "fd({taille})"],
+        'b': ["pu()", "fd({taille})"],
+        '+': "right({angle})",
+        '-': "left({angle})",
+        '*': "right(180)",
+        '[': "savePos()",
+        ']': "getLastPos()"
+    }
+
+    def app(inFile = '', outFile = '', shouldDraw=True):
+        ''' main function of the application '''
+        lsystem = {"axiome":None, "regles":{}, "angle":None, "taille":None, "niveau":None, "customrules":{}}  # default L-System
+
+        error = loadInput(
+            inputFile(message="Please enter path to the input file : ", defaultFile=inFile, shouldExist=True),
+            lsystem
+        )
+        if error: return error
+
+        formatActions(lsystem, actions)
+
+        error, outputFile = LSystemToPythonCode(
+            generate_L_System_by_Level(rules = lsystem["regles"], axiome = lsystem["axiome"], level = lsystem["niveau"]),
+            actions,
+            inputFile(message="Please enter path to the output file : ", defaultFile=outFile),
+            True
+        )
+        if error: return error
+        if shouldDraw: os.execv(sys.executable, [sys.executable, '"' + outputFile + '"'])
+
+    def showHelp():
+        print("l-system.py est un programme pour generer des programme dessinant le L-System")
+        print("SYNTAX : python l-system.py [options] ")
+        print("")
+        print("OPTIONS :")
+        print("\t x -i <fichier> ou --inFile=<fichier>  : permet de definir le fichier d'entree")
+        print("\t x -o <fichier> ou --outFile=<fichier> : permet de definit le fichier de sortie")
+        print("\t x --nodraw : permet de ne pas dessiner a la fin du programme")
+
+        sys.exit()
+    def main():
+        ''' function call at program start. It handle CMD argument '''
+        def handleOptions():
+            ''' function that handle command parameter '''
+            try:
+                options, args = getopt.getopt( sys.argv[1:], "i:o:?h", ['inFile=', 'outFile=', 'nodraw', 'help'])
+            except getopt.GetoptError as error:
+                print("Wrong syntax ! " + error.msg)
+                showHelp()
+
+            for param, arg in options:
+                if param in ("-?", "-h", "--help"): showHelp()
+                elif param in ("-i, --inFile"):
+                    if input_file:
+                        print("-i et --inFile ne doivent pas être utilisé ensemble ou apparaître plusieurs fois")
+                        sys.exit(-1)
+                    else:
+                        input_file = arg
+                elif param in ("-o, --outFile"):
+                    if output_file:
+                        print("-o et --outFile ne doivent pas être utilisé ensemble ou apparaître plusieurs fois")
+                        sys.exit(-1)
+                    else:
+                        output_file = arg
+                elif param in ("--nodraw"): draw = False
+
+        input_file, output_file = '', ''
+        draw = True
+
+        handleOptions()
+
+        try:
+            if app(input_file, output_file, draw):
+                print("Errors has occured. The program could not finish properly.")
+                sys.exit(-1)
+
+        except KeyboardInterrupt:
+            print("program interrupted ... ")
+
+    main()

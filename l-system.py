@@ -38,7 +38,7 @@ def loadInput(filename, lsystem):
             if not indent and currentDict : currentDict = ''
             if currentDict:
                 if elements[0] in lsystem[currentDict]:
-                    print ("erreur , plusieurs occurences de la règle de complacement", elements[0], "dans", currentDict)
+                    print ("erreur , plusieurs occurences de la regle de complacement", elements[0], "dans", currentDict)
                     error = True
                 else:
                     lsystem[currentDict][elements[0]] = elements[1]
@@ -49,7 +49,7 @@ def loadInput(filename, lsystem):
                         if elements[1] != "": lsystem[currentDict][elements[1]] = elements[2]
                         continue
                     if lsystem[elements[0]] != None:
-                        print ("erreur , plusieurs occurences de la règle", elements[0])
+                        print ("erreur , plusieurs occurences de la regle", elements[0])
                         error = True
                     lsystem[elements[0]] = elements[1]
                 else:
@@ -60,31 +60,34 @@ def checkLSystem(lsystem):
     ''' Check the validity of all L-System's parameters '''
     error = False
     if lsystem["axiome"] == None or lsystem["axiome"] == "":
-        print("[Error] >> la règle 'axiome' est vide")
+        print("[Error] >> la regle 'axiome' est vide")
+        error = True
+    if lsystem["regles"] == {}:
+        print("la regle 'regles' est vide")
         error = True
 
     try:
         if lsystem["taille"] == None or float(lsystem["taille"]) < 0:
-            print("[Error] >> la règle 'taille' est vide ou a une valeur invalide (<0)")
+            print("[Error] >> la regle 'taille' est vide ou a une valeur invalide (<0)")
             error = True
     except ValueError:
-        print("[Error] >> la règle 'taille' n'est pas un nombre !")
+        print("[Error] >> la regle 'taille' n'est pas un nombre !")
         error = True
 
     try:
         if lsystem["angle"] == None or float(lsystem["angle"]) < 0 or float(lsystem["angle"]) > 360 :
-            print("[Error] >> la règle 'angle' est vide ou a une valeur invalide (<0 or >360)")
+            print("[Error] >> la regle 'angle' est vide ou a une valeur invalide (<0 or >360)")
             error = True
     except ValueError:
-        print("[Error] >> la règle 'angle' n'est pas un nombre !")
+        print("[Error] >> la regle 'angle' n'est pas un nombre !")
         error = True
 
     try:
-        if int(lsystem["niveau"]) < 0 or lsystem["niveau"] == None :
-            print("[Error] >> la règle 'niveau' est vide ou a une valeur invalide (<0)")
+        if lsystem["niveau"] == None or int(lsystem["niveau"]) < 0 :
+            print("[Error] >> la regle 'niveau' est vide ou a une valeur invalide (<0)")
             error = True
     except ValueError:
-        print("[Error] >> la règle 'niveau' n'est pas un nombre !")
+        print("[Error] >> la regle 'niveau' n'est pas un nombre !")
         error = True
     return error
 def formatActions(lsystem, actions):
@@ -111,7 +114,7 @@ def generate_L_System_by_Level(rules, axiome, level):
 def LSystemToPythonCode(axiome, action, f, verbose=False):
     ''' convert an axiome's L-System string to an executable Python code drawing the L-System '''
     def write(openf, msg):
-        if verbose: print(msg)
+        if verbose: print(msg.strip('\n'))
         openf.write(msg)
 
     openedFile = open(f, 'w')
@@ -124,7 +127,7 @@ def LSystemToPythonCode(axiome, action, f, verbose=False):
 
     for i in axiome:                                # for each symbol in axiome write the associated function(s)
         if not i in actions:
-            print("[Error] >> le symbole " + i + " n'a pas d'action associée a lui")
+            print("[Error] >> le symbole " + i + " n'a pas d'action associee a lui")
             openedFile.close()
             os.remove(f)
             return True, None
@@ -185,6 +188,9 @@ if __name__ == "__main__":      # call main() if this file is the primary file
         ''' function call at program start. It handle CMD argument '''
         def handleOptions():
             ''' function that handle command parameter '''
+            input_file, output_file = '', ''
+            draw = True
+            
             try:
                 options, args = getopt.getopt( sys.argv[1:], "i:o:?h", ['inFile=', 'outFile=', 'nodraw', 'help'])
             except getopt.GetoptError as error:
@@ -195,26 +201,22 @@ if __name__ == "__main__":      # call main() if this file is the primary file
                 if param in ("-?", "-h", "--help"): showHelp()
                 elif param in ("-i, --inFile"):
                     if input_file:
-                        print("-i et --inFile ne doivent pas être utilisé ensemble ou apparaître plusieurs fois")
+                        print("-i et --inFile ne doivent pas etre utilise ensemble ou apparaitre plusieurs fois")
                         sys.exit(-1)
                     else:
                         input_file = arg
                 elif param in ("-o, --outFile"):
                     if output_file:
-                        print("-o et --outFile ne doivent pas être utilisé ensemble ou apparaître plusieurs fois")
+                        print("-o et --outFile ne doivent pas etre utilise ensemble ou apparaitre plusieurs fois")
                         sys.exit(-1)
                     else:
                         output_file = arg
                 elif param in ("--nodraw"): draw = False
-
-        input_file, output_file = '', ''
-        draw = True
-
-        handleOptions()
+            return input_file, output_file, draw
 
         try:
-            if app(input_file, output_file, draw):
-                print("Errors has occured. The program could not finish properly.")
+            if app(*handleOptions()):
+                print("Errors has occured. The program could not finish properly. Please contact the developpers !")
                 sys.exit(-1)
 
         except KeyboardInterrupt:
